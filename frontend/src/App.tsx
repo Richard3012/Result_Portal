@@ -1,48 +1,36 @@
-import React, { useState } from 'react';
-import { LogIn, GraduationCap } from 'lucide-react';
-import LoginPage from './components/LoginPage';
-import ResultPage from './components/ResultPage';
+import React, { useState, useEffect } from "react";
+import LoginPage from "./components/LoginPage";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [studentData, setStudentData] = useState(null);
+  const [currentPort] = useState(window.location.port || "3000");
 
-  // Simulated student data - in a real app, this would come from a backend
-  const mockStudentData = {
-    name: "John Doe",
-    rollNumber: "2024001",
-    class: "XII-A",
-    results: {
-      Mathematics: 95,
-      Physics: 88,
-      Chemistry: 92,
-      English: 85,
-      ComputerScience: 98
+  useEffect(() => {
+    // Check if we need to assign a server
+    if (window.location.pathname === "/assign-server") {
+      window.location.href = `http://localhost:3000/assign-server`;
     }
+  }, []);
+
+  const handleLogin = (credentials) => {
+    // Your login logic here
+    console.log(`Logging in on port ${currentPort}`, credentials);
+    setIsLoggedIn(true);
   };
 
-  const handleLogin = (credentials: { username: string; password: string }) => {
-    // Simulate authentication - in a real app, this would be an API call
-    if (credentials.username === "student" && credentials.password === "password") {
-      setIsLoggedIn(true);
-      setStudentData(mockStudentData);
-    } else {
-      alert("Invalid credentials! Please try again.");
-    }
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setStudentData(null);
-  };
+  if (!isLoggedIn) {
+    return (
+      <div className="app-container">
+        <div className="port-indicator">Connected to: Port {currentPort}</div>
+        <LoginPage onLogin={handleLogin} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {!isLoggedIn ? (
-        <LoginPage onLogin={handleLogin} />
-      ) : (
-        <ResultPage studentData={studentData} onLogout={handleLogout} />
-      )}
+    <div className="app-container">
+      <div className="port-indicator">Connected to: Port {currentPort}</div>
+      {/* Your logged-in content here */}
     </div>
   );
 }
