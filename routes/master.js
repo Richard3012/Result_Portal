@@ -7,98 +7,89 @@ const MASTER_PORT = 3000;
 
 const activeServers = [];
 const MAX_USERS_PER_SERVER = 2;
-let nextWorkerPort = 4000;
+let nextWorkerPort = MASTER_PORT + 1000; // Starts at 4000
 
-const activeConnections = new Map();
+// Initialize master server
+activeServers.push({
+  port: MASTER_PORT,
+  userCount: 0,
+  isMaster: true,
+});
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-// Assign server endpoint
+// Register new workers
+app.post("/register-worker", (req, res) => {
+  const { port } = req.body;
+  if (!activeServers.some((s) => s.port === port)) {
+    activeServers.push({ port: Number(port), userCount: 0 });
+    console.log(`Worker registered on port ${port}`);
+  }
+  res.sendStatus(200);
+});
+
+// Main assignment endpoint
 app.get("/assign-server", (req, res) => {
-  // Clean up disconnected servers first
-  activeServers.forEach((server) => {
-    if (server.userCount === 0 && server.port !== MASTER_PORT) {
-      console.log(`Closing unused worker on port ${server.port}`);
+  // Clean up empty workers (except master)
+  activeServers.forEach((server, index) => {
+    if (!server.isMaster && server.userCount === 0 && server.process) {
       server.process.kill();
-      activeServers.splice(activeServers.indexOf(server), 1);
+      activeServers.splice(index, 1);
     }
   });
 
-  const availableServer = activeServers.find(
-    (s) => s.userCount < MAX_USERS_PER_SERVER
-  );
+  // Find available server
+  const availableServer =
+    activeServers.find((s) => s.userCount < MAX_USERS_PER_SERVER) ||
+    createNewWorker();
 
-  if (availableServer) {
-    availableServer.userCount++;
-    const connectionID = Date.now();
-    activeConnections.set(connectionID, availableServer.port);
+  availableServer.userCount++;
+  logStats();
 
-    console.log(
-      `Assigning to port ${availableServer.port} (${availableServer.userCount} users)`
-    );
-    return res.json({ port: availableServer.port });
+  // Redirect browsers, return JSON for API calls
+  if (req.accepts("html")) {
+    // Fixed: Added missing parenthesis
+    if (availableServer.port !== MASTER_PORT) {
+      return res.redirect(`http://localhost:${availableServer.port}`);
+    }
+    return res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   }
 
-  // Launch new worker on next available port
+  res.json({ port: availableServer.port });
+});
+
+function createNewWorker() {
   const newPort = nextWorkerPort;
-  nextWorkerPort += 1000; // Increment for next worker (4000, 5000, etc.)
+  nextWorkerPort += 1000;
 
-  const workerProcess = spawn("node", ["../worker.js", newPort.toString()], {
-    stdio: "inherit",
-    detached: true,
-  });
-
-  const connectionID = Date.now();
-  activeConnections.set(connectionID, newPort);
-
-  activeServers.push({
+  const worker = {
     port: newPort,
-    userCount: 1,
-    process: workerProcess,
-  });
+    userCount: 0,
+    process: spawn("node", ["worker.js", newPort.toString()], {
+      stdio: "inherit",
+      detached: true,
+      cwd: path.join(__dirname, ".."),
+    }),
+  };
 
+  activeServers.push(worker);
   console.log(`Launched new worker on port ${newPort}`);
-  res.json({ port: newPort, connectionID });
-});
+  return worker;
+}
 
-// Release endpoint
-app.post("/release-slot/:connectionId", (req, res) => {
-  const connectionID = req.params.connectionId;
-  const port = activeConnections.get(connectionID);
+function logStats() {
+  const stats = activeServers
+    .map((s) => `Port ${s.port}: ${s.userCount}/${MAX_USERS_PER_SERVER} users`)
+    .join("\n");
+  console.log(`\n=== Current Load ===\n${stats}\n`);
+}
 
-  if (port) {
-    const server = activeServers.find((s) => s.port === port);
-    if (server) {
-      server.userCount = Math.max(0, server.userCount - 1);
-      console.log(`Released slot on ${port} (now ${server.userCount} users)`);
-
-      activeConnections.delete(connectionID);
-    }
-    res.sendStatus(200);
-  }
-});
-
-//Heartbeat Endpo
-app.post("/heartbeat/:connectionId", (req, res) => {
-  const connectionId = req.params.connectionId;
-  if (activeConnections.has(connectionId)) {
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(404);
-  }
-});
-
-// Fallback to frontend
+// Fallback for frontend routing
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
 app.listen(MASTER_PORT, () => {
-  console.log(`Master controller running on http://localhost:${MASTER_PORT}`);
-  activeServers.push({
-    port: MASTER_PORT,
-    userCount: 0,
-    process: { kill: () => {} },
-  });
+  console.log(`Master server running on http://localhost:${MASTER_PORT}`);
 });

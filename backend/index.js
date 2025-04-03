@@ -13,3 +13,16 @@ app.get("*", (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+
+
+//if(no of users per server == 2){
+// PORT += 1000;
+// }
+
+// process should host at PORT incremented
+
+
+
+//Print the no of users per server
+//print the total numbers on all the servers
