@@ -1,19 +1,7 @@
 import React from 'react';
 import { LogOut, Award, BookOpen } from 'lucide-react';
 
-interface ResultPageProps {
-  studentData: {
-    name: string;
-    rollNumber: string;
-    class: string;
-    results: {
-      [key: string]: number;
-    };
-  } | null;
-  onLogout: () => void;
-}
-
-function ResultPage({ studentData, onLogout }: ResultPageProps) {
+function ResultPage({ studentData, onLogout }) {
   if (!studentData) return null;
 
   const totalMarks = Object.values(studentData.results).reduce((a, b) => a + b, 0);

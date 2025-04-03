@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { LogIn, GraduationCap } from 'lucide-react';
 
-interface LoginPageProps {
-  onLogin: (credentials: { username: string; password: string }) => void;
-}
-
-function LoginPage({ onLogin }: LoginPageProps) {
+function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     onLogin({ username, password });
   };
