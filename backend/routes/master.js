@@ -7,7 +7,7 @@ const MASTER_PORT = 3000;
 
 const activeServers = [];
 const MAX_USERS_PER_SERVER = 2;
-let nextWorkerPort = MASTER_PORT + 1000; // Starts at 4000
+let nextWorkerPort = MASTER_PORT + 1000; 
 
 // Initialize master server
 activeServers.push({
@@ -17,7 +17,7 @@ activeServers.push({
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../frontend/dist")));
+app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 
 // Register new workers
 app.post("/register-worker", (req, res) => {
@@ -53,7 +53,7 @@ app.get("/assign-server", (req, res) => {
     if (availableServer.port !== MASTER_PORT) {
       return res.redirect(`http://localhost:${availableServer.port}`);
     }
-    return res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+    return res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
   }
 
   res.json({ port: availableServer.port });

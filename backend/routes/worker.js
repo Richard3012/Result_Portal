@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const axios = require("axios");
+const fs = require("fs");
 
 const PORT = process.argv[2] || 4000;
 const MASTER_URL = "http://localhost:3000";
@@ -9,7 +10,7 @@ const app = express();
 let connectedUsers = 0;
 
 // IMPORTANT: Get the CORRECT path to frontend files
-const frontendDistPath = path.resolve(__dirname, "../frontend/dist");
+const frontendDistPath = path.resolve(__dirname, "../../../../dist");
 
 // Verify the path exists
 console.log(`[Worker ${PORT}] Serving frontend from: ${frontendDistPath}`);
@@ -56,7 +57,7 @@ app.get("/health", (req, res) => {
 
 // SPA fallback route (must be last)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendDistPath, "../../frontend/src/index.html"));
+  res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 
 app.listen(PORT, () => {
