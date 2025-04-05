@@ -7,7 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:4000": "cross-env PORT=4000 vite",
+    "dev:5000": "cross-env PORT=5000 vite",
+    "dev:6000": "cross-env PORT=6000 vite",
+    "dev:7000": "cross-env PORT=7000 vite",
+    "dev:8000": "cross-env PORT=8000 vite",
+    "dev:9000": "cross-env PORT=9000 vite",
+    "dev:multi": "concurrently \"npm run dev:4000\" \"npm run dev:5000\" \"npm run dev:6000\" \"npm run dev:7000\" \"npm run dev:8000\" \"npm run dev:9000\"",
+    "dev:multi-large": "node start-multi-ports.js"
+
   },
   "dependencies": {
     "lucide-react": "^0.344.0",

@@ -16,7 +16,7 @@ export default defineConfig({
     include: ["react", "react-dom"],
   },
   build: {
-    outDir: path.resolve(__dirname, "../../dist"),
+    outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
     rollupOptions: {
       input: path.resolve(__dirname, "index.html"),
@@ -29,7 +29,7 @@ export default defineConfig({
     sourcemap: true,
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.PORT) || 3000 || 6000,
     strictPort: true,
     hmr: {
       protocol: "ws",

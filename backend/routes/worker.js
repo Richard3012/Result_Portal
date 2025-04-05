@@ -61,7 +61,7 @@ app.get("/health", (req, res) => {
 
 // SPA fallback route (must be last)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendDistPath, "./index.html"));
+  res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 
 app.listen(PORT, () => {
