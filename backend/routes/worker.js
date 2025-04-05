@@ -9,8 +9,12 @@ const MASTER_URL = "http://localhost:3000";
 const app = express();
 let connectedUsers = 0;
 
-// IMPORTANT: Get the CORRECT path to frontend files
-const frontendDistPath = path.resolve(__dirname, "../../../../dist");
+const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
+
+if (!fs.existsSync(path.join(frontendDistPath, "index.html"))) {
+  console.error("Frontend files missing at:", frontendDistPath);
+  process.exit(1);
+}
 
 // Verify the path exists
 console.log(`[Worker ${PORT}] Serving frontend from: ${frontendDistPath}`);
@@ -57,7 +61,7 @@ app.get("/health", (req, res) => {
 
 // SPA fallback route (must be last)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendDistPath, "index.html"));
+  res.sendFile(path.join(frontendDistPath, "./index.html"));
 });
 
 app.listen(PORT, () => {

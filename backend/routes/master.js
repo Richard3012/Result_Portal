@@ -87,7 +87,7 @@ function logStats() {
 
 // Fallback for frontend routing
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
 });
 
 app.listen(MASTER_PORT, () => {

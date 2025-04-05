@@ -6,9 +6,18 @@ function App() {
   const [currentPort] = useState(window.location.port || "3000");
 
   useEffect(() => {
-    // Check if we need to assign a server
-    if (window.location.pathname === "/assign-server") {
-      window.location.href = `http://localhost:3000/assign-server`;
+    const port = window.location.port || "3000";
+
+    // Only do assignment if on master port
+    if (port === "3000") {
+      fetch("/assign-server")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.port && data.port.toString() !== port) {
+            window.location.href = `http://localhost:${data.port}`;
+          }
+        })
+        .catch(console.error);
     }
   }, []);
 
