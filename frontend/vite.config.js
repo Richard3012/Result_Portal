@@ -29,7 +29,7 @@ export default defineConfig({
     sourcemap: true,
   },
   server: {
-    port: parseInt(process.env.PORT) || 3000 || 6000,
+    port: parseInt(process.env.PORT) || 3000,
     strictPort: true,
     hmr: {
       protocol: "ws",
