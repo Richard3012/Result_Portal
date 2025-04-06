@@ -7,7 +7,18 @@ const MASTER_PORT = 3000;
 
 const activeServers = [];
 const MAX_USERS_PER_SERVER = 2;
-let nextWorkerPort = MASTER_PORT + 1000; 
+let nextWorkerPort = 4000; //for handling usafe ports
+
+const unsafePorts = [6000, 6666, 6660, 25, 135];
+
+function getNextSafePort() {
+  while (unsafePorts.includes(nextWorkerPort)) {
+    nextWorkerPort += 1000;
+  }
+  const portToReturn = nextWorkerPort;
+  nextWorkerPort += 1000;
+  return portToReturn;
+}
 
 // Initialize master server
 activeServers.push({
@@ -47,9 +58,7 @@ app.get("/assign-server", (req, res) => {
   availableServer.userCount++;
   logStats();
 
-  // Redirect browsers, return JSON for API calls
   if (req.accepts("html")) {
-    // Fixed: Added missing parenthesis
     if (availableServer.port !== MASTER_PORT) {
       return res.redirect(`http://localhost:${availableServer.port}`);
     }
@@ -60,8 +69,7 @@ app.get("/assign-server", (req, res) => {
 });
 
 function createNewWorker() {
-  const newPort = nextWorkerPort;
-  nextWorkerPort += 1000;
+  const newPort = getNextSafePort();
 
   const worker = {
     port: newPort,

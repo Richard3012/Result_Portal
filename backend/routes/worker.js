@@ -1,73 +1,67 @@
 const express = require("express");
 const path = require("path");
 const axios = require("axios");
-const fs = require("fs");
 
 const PORT = process.argv[2] || 4000;
 const MASTER_URL = "http://localhost:3000";
-
-const app = express();
 let connectedUsers = 0;
 
-const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
+const app = express();
 
-if (!fs.existsSync(path.join(frontendDistPath, "index.html"))) {
-  console.error("Frontend files missing at:", frontendDistPath);
-  process.exit(1);
-}
+const frontendPath = path.resolve(__dirname, "../../frontend/dist");
+console.log(`[Worker ${PORT}] Frontend path: ${frontendPath}`);
 
-// Verify the path exists
-console.log(`[Worker ${PORT}] Serving frontend from: ${frontendDistPath}`);
-
-// Middleware to track connections
 app.use((req, res, next) => {
-  // Skip for static files and health checks
-  if (req.path.startsWith("/static") || req.path === "/health") {
-    return next();
-  }
+  const isStatic =
+    req.path.startsWith("/assets") ||
+    req.path.endsWith(".js") ||
+    req.path.endsWith(".css") ||
+    req.path.endsWith(".map") ||
+    req.path === "/favicon.ico" ||
+    req.path === "/health";
 
-  // Check server capacity
+  if (isStatic) return next();
+
   if (connectedUsers >= 2) {
+    console.log(`[Worker ${PORT}] Redirecting to master (limit reached)`);
     return res.redirect(`${MASTER_URL}/assign-server`);
   }
 
   connectedUsers++;
-  console.log(`[Worker ${PORT}] Connection + (${connectedUsers}/2 users)`);
+  console.log(`[Worker ${PORT}] +1 User (${connectedUsers}/2)`);
 
   res.on("finish", () => {
     connectedUsers--;
-    console.log(`[Worker ${PORT}] Connection - (${connectedUsers}/2 users)`);
+    console.log(`[Worker ${PORT}] -1 User (${connectedUsers}/2)`);
     axios
       .post(`${MASTER_URL}/release-slot`, { port: PORT })
       .catch((err) =>
-        console.error(`[Worker ${PORT}] Release error:`, err.message)
+        console.error(`[Worker ${PORT}] Release failed:`, err.message)
       );
   });
 
   next();
 });
 
-// Serve static files from absolute path
-app.use(express.static(frontendDistPath));
+app.use(express.static(frontendPath));
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({
-    status: "healthy",
-    port: PORT,
-    connections: connectedUsers,
-  });
+app.get("/favicon.ico", (req, res) => {
+  res.sendFile(path.join(frontendPath, "favicon.ico"));
 });
 
-// SPA fallback route (must be last)
+app.get("/health", (req, res) => {
+  res.json({ status: "healthy", port: PORT, connections: connectedUsers });
+});
+
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendDistPath, "index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log(`[Worker] Server running on http://localhost:${PORT}`);
-  // Register with master
+  console.log(`🧑‍💼 Worker listening at http://localhost:${PORT}`);
   axios
     .post(`${MASTER_URL}/register-worker`, { port: PORT })
-    .catch((err) => console.error("Registration failed:", err.message));
+    .catch((err) =>
+      console.error(`[Worker ${PORT}] Registration failed:`, err.message)
+    );
 });

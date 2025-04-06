@@ -14,6 +14,7 @@ function App() {
         .then((res) => res.json())
         .then((data) => {
           if (data.port && data.port.toString() !== port) {
+            console.log(`Redirecting to worker on port ${data.port}`);
             window.location.href = `http://localhost:${data.port}`;
           }
         })
@@ -22,7 +23,6 @@ function App() {
   }, []);
 
   const handleLogin = (credentials) => {
-    // Your login logic here
     console.log(`Logging in on port ${currentPort}`, credentials);
     setIsLoggedIn(true);
   };
